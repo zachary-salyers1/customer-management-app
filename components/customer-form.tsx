@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/hooks/use-toast"  // Update this line
 
 type CustomerFormProps = {
-  onAddCustomer: (customer: { id: number; name: string; email: string; phone: string }) => void;
+  onAddCustomer: (customer: Customer) => void;
 };
 
 export function CustomerForm({ onAddCustomer }: CustomerFormProps) {
@@ -18,7 +18,13 @@ export function CustomerForm({ onAddCustomer }: CustomerFormProps) {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const newCustomer = { id: Date.now(), name, email, phone }
+    const newCustomer: Customer = { 
+      id: Date.now(), 
+      name, 
+      email, 
+      phone,
+      projects: []
+    }
     console.log('Submitting new customer:', newCustomer)
     onAddCustomer(newCustomer)
     setName('')
