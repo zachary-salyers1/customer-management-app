@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/hooks/use-toast"
 
 type ProjectFormProps = {
-  onAddProject: (project: Project) => void;
-  customerId: number;
+  onAddProject: (project: Omit<Project, 'id'>) => void;
+  customerId: string;
 };
 
 export function ProjectForm({ onAddProject, customerId }: ProjectFormProps) {
@@ -16,11 +16,10 @@ export function ProjectForm({ onAddProject, customerId }: ProjectFormProps) {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const newProject: Project = {
-      id: Date.now(),
+    const newProject: Omit<Project, 'id'> = {
       name,
       description,
-      tasks: []
+      customerId
     }
     onAddProject(newProject)
     setName('')

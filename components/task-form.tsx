@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast"
 
 type TaskFormProps = {
-  onAddTask: (task: Task) => void;
-  projectId: number;
+  onAddTask: (task: Omit<Task, 'id'>) => void;
+  projectId: string;
 };
 
 export function TaskForm({ onAddTask, projectId }: TaskFormProps) {
@@ -18,12 +18,12 @@ export function TaskForm({ onAddTask, projectId }: TaskFormProps) {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const newTask: Task = {
-      id: Date.now(),
+    const newTask: Omit<Task, 'id'> = {
       name,
       description,
       status: 'todo',
-      priority
+      priority,
+      projectId
     }
     onAddTask(newTask)
     setName('')

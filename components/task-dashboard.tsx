@@ -1,17 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"  // Import the Checkbox component
+import { updateTaskStatus } from '@/lib/db'  // Import the function to update task status
 
 type DashboardProps = {
   customers: Customer[]
+  onUpdateTaskStatus: (task: Task) => void
 }
 
-export function TaskDashboard({ customers }: DashboardProps) {
+export function TaskDashboard({ customers, onUpdateTaskStatus }: DashboardProps) {
   const allTasks = customers.flatMap(customer =>
     customer.projects.flatMap(project =>
       project.tasks.map(task => ({
         ...task,
         projectName: project.name,
-        customerName: customer.name
+        customerName: customer.name,
+        customerId: customer.id,
+        projectId: project.id,
       }))
     )
   )
@@ -24,6 +29,9 @@ export function TaskDashboard({ customers }: DashboardProps) {
     }
   }
 
+  // Filter out completed tasks
+  const incompleteTasks = allTasks.filter(task => task.status !== 'completed')
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -31,18 +39,26 @@ export function TaskDashboard({ customers }: DashboardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {allTasks.map(task => (
+          {incompleteTasks.map(task => (
             <Card key={task.id} className="p-4">
               <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold">{task.name}</h3>
-                  <p className="text-sm text-gray-500">{task.description}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Project: {task.projectName} | Customer: {task.customerName}
-                  </p>
+                <div className="flex items-center">
+                  <Checkbox
+                    checked={false}
+                    onCheckedChange={() => onUpdateTaskStatus(task)}
+                    id={task.id}
+                    aria-label={`Mark ${task.name} as completed`}
+                  />
+                  <div className="ml-4">
+                    <h3 className="font-bold">{task.name}</h3>
+                    <p className="text-sm text-gray-500">{task.description}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Project: {task.projectName} | Customer: {task.customerName}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Badge 
+                  <Badge
                     variant={
                       task.status === 'completed' ? 'default' :
                       task.status === 'in-progress' ? 'secondary' : 'outline'
