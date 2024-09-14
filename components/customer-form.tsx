@@ -1,43 +1,84 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "@/hooks/use-toast"  // Update this line
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "@/hooks/use-toast"
+import { Customer } from '@/types'
 
 type CustomerFormProps = {
-  onAddCustomer: (customer: Omit<Customer, 'id' | 'userId'>) => void;
+  onSubmitCustomer: (customer: Omit<Customer, 'id' | 'userId' | 'projects'>) => void;
+  initialCustomer?: Customer;
 };
 
-export function CustomerForm({ onAddCustomer }: CustomerFormProps) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
+export function CustomerForm({ onSubmitCustomer, initialCustomer }: CustomerFormProps) {
+  const [name, setName] = useState(initialCustomer?.name || '')
+  const [companyName, setCompanyName] = useState(initialCustomer?.companyName || '')
+  const [email, setEmail] = useState(initialCustomer?.email || '')
+  const [phone, setPhone] = useState(initialCustomer?.phone || '')
+  const [jobTitle, setJobTitle] = useState(initialCustomer?.jobTitle || '')
+  const [leadType, setLeadType] = useState<'cold' | 'warm' | 'hot'>(initialCustomer?.leadType || 'cold')
+  const [customFields, setCustomFields] = useState<{ [key: string]: string }>(initialCustomer?.customFields || {})
+  const [newFieldName, setNewFieldName] = useState('')
+
+  useEffect(() => {
+    if (initialCustomer) {
+      setName(initialCustomer.name)
+      setCompanyName(initialCustomer.companyName)
+      setEmail(initialCustomer.email)
+      setPhone(initialCustomer.phone)
+      setJobTitle(initialCustomer.jobTitle)
+      setLeadType(initialCustomer.leadType)
+      setCustomFields(initialCustomer.customFields)
+    }
+  }, [initialCustomer])
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const newCustomer: Omit<Customer, 'id'> = { 
-      name, 
-      email, 
+    const customerData: Omit<Customer, 'id' | 'userId' | 'projects'> = {
+      name,
+      companyName,
+      email,
       phone,
+      jobTitle,
+      leadType,
+      customFields
     }
-    onAddCustomer(newCustomer)
-    setName('')
-    setEmail('')
-    setPhone('')
+    onSubmitCustomer(customerData)
+    if (!initialCustomer) {
+      // Reset form fields only if adding a new customer
+      setName('')
+      setCompanyName('')
+      setEmail('')
+      setPhone('')
+      setJobTitle('')
+      setLeadType('cold')
+      setCustomFields({})
+    }
     toast({
-      title: "Customer Added",
-      description: `${name} has been added successfully.`,
+      title: initialCustomer ? "Customer Updated" : "Customer Added",
+      description: `${name} from ${companyName} has been ${initialCustomer ? 'updated' : 'added'} successfully.`,
     })
-    console.log('Form reset, customer should be added')
+  }
+
+  const handleAddCustomField = () => {
+    if (newFieldName && !customFields[newFieldName]) {
+      setCustomFields({ ...customFields, [newFieldName]: '' })
+      setNewFieldName('')
+    }
+  }
+
+  const handleCustomFieldChange = (fieldName: string, value: string) => {
+    setCustomFields({ ...customFields, [fieldName]: value })
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add New Customer</CardTitle>
+        <CardTitle>{initialCustomer ? 'Edit Customer' : 'Add New Customer'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -47,6 +88,15 @@ export function CustomerForm({ onAddCustomer }: CustomerFormProps) {
               id="customerName"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="companyName">Company Name</Label>
+            <Input
+              id="companyName"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
               required
             />
           </div>
@@ -70,7 +120,49 @@ export function CustomerForm({ onAddCustomer }: CustomerFormProps) {
               required
             />
           </div>
-          <Button type="submit">Add Customer</Button>
+          <div>
+            <Label htmlFor="jobTitle">Job Title</Label>
+            <Input
+              id="jobTitle"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="leadType">Lead Type</Label>
+            <Select onValueChange={(value: 'cold' | 'warm' | 'hot') => setLeadType(value)} value={leadType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select lead type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cold">Cold</SelectItem>
+                <SelectItem value="warm">Warm</SelectItem>
+                <SelectItem value="hot">Hot</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Custom Fields */}
+          {Object.entries(customFields).map(([fieldName, fieldValue]) => (
+            <div key={fieldName}>
+              <Label htmlFor={fieldName}>{fieldName}</Label>
+              <Input
+                id={fieldName}
+                value={fieldValue}
+                onChange={(e) => handleCustomFieldChange(fieldName, e.target.value)}
+              />
+            </div>
+          ))}
+          {/* Add New Custom Field */}
+          <div className="flex space-x-2">
+            <Input
+              placeholder="New Field Name"
+              value={newFieldName}
+              onChange={(e) => setNewFieldName(e.target.value)}
+            />
+            <Button type="button" onClick={handleAddCustomField}>Add Field</Button>
+          </div>
+          <Button type="submit">{initialCustomer ? 'Update Customer' : 'Add Customer'}</Button>
         </form>
       </CardContent>
     </Card>
